@@ -6,7 +6,9 @@ This hands-on lab covers the following topics:
 
 1. **RAG Overview**: Understand the fundamentals of RAG and its applications in real-world scenarios.
 2. **Embedding Techniques**: Learn how to chunk various data types (text, images, tables) into embeddings for RAG using Azure Document Intelligence and Azure AI Search. 
-3. **RAG with Microsoft Sharepoint**: Implement RAG with Microsoft Sharepoint to enhance the search experience.
+3. **Build Data Processing Pipelines**: Use LogicApps to feed data from Sharepoint to create embeddings for RAG.
+
+![LogicApps](images/sharepoint.png "LogicApps")
 
 ## Lab Preparation
 
