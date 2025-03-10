@@ -1,0 +1,117 @@
+{
+  "definition": {
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "actions": {
+      "Try": {
+        "type": "Scope",
+        "actions": {
+          "Upload_file_to_storage_account": {
+            "type": "ServiceProvider",
+            "inputs": {
+              "parameters": {
+                "containerName": "sharepoint-rag",
+                "blobName": "@triggerBody()?['{FullPath}']",
+                "content": "@body('Get_File_from_Sharepoint')",
+                "overrideIfExists": "true"
+              },
+              "serviceProviderConfiguration": {
+                "connectionName": "AzureBlob",
+                "operationId": "uploadBlob",
+                "serviceProviderId": "/serviceProviders/AzureBlob"
+              }
+            },
+            "runAfter": {
+              "Get_File_from_Sharepoint": [
+                "SUCCEEDED"
+              ]
+            }
+          },
+          "Get_File_from_Sharepoint": {
+            "type": "ApiConnection",
+            "inputs": {
+              "host": {
+                "connection": {
+                  "referenceName": "sharepointonline"
+                }
+              },
+              "method": "get",
+              "path": "/datasets/@{encodeURIComponent(encodeURIComponent('https://microsoftapc.sharepoint.com/teams/SharepointRAGTest'))}/files/@{encodeURIComponent(triggerBody()?['{Identifier}'])}/content",
+              "queries": {
+                "inferContentType": true
+              }
+            }
+          },
+          "Add_a_message_to_storage_queue": {
+            "type": "ServiceProvider",
+            "inputs": {
+              "parameters": {
+                "queueName": "sharepointragqueue",
+                "message": "@variables('triggerdetails')"
+              },
+              "serviceProviderConfiguration": {
+                "connectionName": "azurequeues",
+                "operationId": "putMessage",
+                "serviceProviderId": "/serviceProviders/azurequeues"
+              }
+            },
+            "runAfter": {
+              "Upload_file_to_storage_account": [
+                "SUCCEEDED"
+              ]
+            }
+          }
+        },
+        "runAfter": {
+          "Get_File_Details": [
+            "SUCCEEDED"
+          ]
+        }
+      },
+      "Catch": {
+        "type": "Scope",
+        "actions": {},
+        "runAfter": {
+          "Try": [
+            "FAILED",
+            "TIMEDOUT"
+          ]
+        }
+      },
+      "Get_File_Details": {
+        "type": "InitializeVariable",
+        "inputs": {
+          "variables": [
+            {
+              "name": "triggerdetails",
+              "type": "string",
+              "value": "{\n \"eventType\": \"CreatedOrUpdated\",\n\t\"modified\": \"@{triggerBody()?['Modified']}\",\n\t\"link\": \"@{triggerBody()?['{Link}']}\",\n \"sharepointFileId\": @{triggerBody()?['ID']},\n\t\"fullpath\": \"@{triggerBody()?['{FullPath}']}\",\n \"filename\": \"@{triggerBody()?['{FilenameWithExtension}']}\",\n\t\"email\": \"@{triggerBody()?['Editor']?['Email']}\"\n}"
+            }
+          ]
+        },
+        "runAfter": {}
+      }
+    },
+    "contentVersion": "1.0.0.0",
+    "outputs": {},
+    "triggers": {
+      "When_a_file_is_created_or_modified_(properties_only)": {
+        "type": "ApiConnection",
+        "inputs": {
+          "host": {
+            "connection": {
+              "referenceName": "sharepointonline"
+            }
+          },
+          "method": "get",
+          "path": "/datasets/@{encodeURIComponent(encodeURIComponent('https://microsoftapc.sharepoint.com/teams/SharepointRAGTest'))}/tables/@{encodeURIComponent(encodeURIComponent('e3ba505e-f734-4cf9-8074-278578c0bfd0'))}/onupdatedfileitems"
+        },
+        "recurrence": {
+          "interval": 1,
+          "frequency": "Minute"
+        },
+        "splitOn": "@triggerBody()?['value']"
+      }
+    }
+  },
+  "kind": "Stateful"
+}
