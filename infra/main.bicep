@@ -310,7 +310,6 @@ module searchService 'br/public:avm/res/search/search-service:0.9.1' = {
   scope: resourceGroup
   params: {
     name: '${abbrs.cognitiveServicesSearch}${resourceToken}'
-    }
     location: location
     disableLocalAuth: false
     tags: tags
