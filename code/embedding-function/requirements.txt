@@ -1,5 +1,5 @@
 azure-functions==1.21.3
-python-dotenv==1.0.1
+python-dotenv==1.2.2
 azure-ai-formrecognizer==3.3.3
 azure-storage-blob==12.24.0
 azure-identity==1.19.0
